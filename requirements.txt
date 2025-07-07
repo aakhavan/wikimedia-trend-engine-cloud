@@ -1,0 +1,29 @@
+# =============================================================================
+# Python Dependencies for Wikimedia Trends Engine
+#
+# Pinning versions ensures that our application build is reproducible and
+# stable. Use 'pip install -r requirements.txt' to install these exact versions.
+# =============================================================================
+
+# For Spark Jobs
+pyspark==3.5.1
+
+# For Kafka Producer & AWS SDK
+boto3==1.34.109
+python-dateutil==2.9.0.post0 # Explicit dependency of boto3
+confluent-kafka==2.4.0       # <-- MODERN, ROBUST KAFKA CLIENT (pre-built wheel available)
+PyYAML==6.0.1
+
+# For Wikimedia SSE Stream
+requests==2.31.0
+sseclient-py==1.8.0
+
+# For Testing
+pytest==8.2.0
+pytest-mock==3.14.0
+
+# Build tools (helps with C extensions)
+wheel
+
+# Compatibility layer for various libraries
+six==1.16.0
