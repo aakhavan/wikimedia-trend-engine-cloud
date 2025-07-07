@@ -1,0 +1,50 @@
+# =============================================================================
+# Git Ignore File for Wikimedia Trends Engine (Cloud-Native)
+# =============================================================================
+
+# --- Terraform State & Configuration ---
+# These files contain the state of your deployed infrastructure and can
+# include sensitive information. They should never be committed.
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+*.tfplan
+
+# --- Local Terraform Variables ---
+# This file contains personal secrets like your IP address or AWS keys.
+# It is critical to ignore this file.
+terraform.tfvars
+*.tfvars
+
+# --- Local Environment Variables ---
+# Ignore local environment files that may contain secrets.
+.env
+
+# --- Python Virtual Environments ---
+# Ignore the virtual environment directory.
+.venv/
+venv/
+env/
+
+# --- Python Cache & Bytecode ---
+# Ignore compiled Python files and cache directories.
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# --- IDE & Editor Directories ---
+# Ignore configuration files from common IDEs.
+.idea/
+.vscode/
+
+# --- Operating System Files ---
+# Ignore OS-specific metadata files.
+.DS_Store
+Thumbs.db
+
+# --- Local Build Artifacts ---
+# Ignore local build directories and artifacts.
+build/
+dist/
+*.egg-info/
