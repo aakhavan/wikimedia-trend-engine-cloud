@@ -1,37 +1,8 @@
+# .gitignore
+
 # =============================================================================
 # Git Ignore File for Wikimedia Trends Engine (Cloud-Native)
 # =============================================================================
-
-# --- Terraform State & Configuration ---
-# These files contain the state of your deployed infrastructure and can
-# include sensitive information. They should never be committed.
-*.tfstate
-*.tfstate.*
-.terraform.lock.hcl
-*.tfplan
-
-# --- Local Terraform Variables ---
-# This file contains personal secrets like your IP address or AWS keys.
-# It is critical to ignore this file.
-terraform.tfvars
-*.tfvars
-
-# --- Local Environment Variables ---
-# Ignore local environment files that may contain secrets.
-.env
-
-# --- Python Virtual Environments ---
-# Ignore the virtual environment directory.
-.venv/
-venv/
-env/
-
-# --- Python Cache & Bytecode ---
-# Ignore compiled Python files and cache directories.
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
 
 # --- IDE & Editor Directories ---
 # Ignore configuration files from common IDEs.
@@ -43,8 +14,51 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
+# --- Python Specific ---
+# Ignore the virtual environment directory, cache, and compiled files.
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
 # --- Local Build Artifacts ---
 # Ignore local build directories and artifacts.
 build/
 dist/
 *.egg-info/
+
+# --- Local Environment Variables ---
+# Ignore local environment files that may contain secrets.
+.env
+
+# =============================================================================
+# Terraform Specific
+# =============================================================================
+
+# Ignore local provider plugins and other machine-specific files.
+# This is the most important rule to prevent committing large binaries.
+**/.terraform/
+
+# Ignore local state files, which can contain sensitive infrastructure data.
+*.tfstate
+*.tfstate.*
+
+# Ignore plan files, which can also contain sensitive data.
+*.tfplan
+
+# Ignore crash logs.
+crash.log
+
+# Ignore local variable override files.
+*.tfvars
+*.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Ignore the dependency lock file.
+.terraform.lock.hcl
