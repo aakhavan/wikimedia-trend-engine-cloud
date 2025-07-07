@@ -4,6 +4,64 @@ This repository contains the complete infrastructure and application code for a 
 
 The entire platform is defined using Infrastructure as Code (IaC) with Terraform, making it reproducible, modular, and easy to manage.
 
+## Architecture Diagram
+
+```mermaid
+graph TD
+    subgraph "Developer Environment"
+        User[<fa:fa-user> Developer]
+        Terraform[<fa:fa-code> Terraform]
+        Producer[<fa:fa-python> producer.py]
+    end
+
+    subgraph "AWS Cloud"
+        subgraph "VPC"
+            subgraph "Ingestion"
+                MSK[<fa:fa-server> Amazon MSK Serverless]
+            end
+
+            subgraph "Processing"
+                EMR[<fa:fa-cogs> Amazon EMR Serverless]
+            end
+
+            subgraph "Orchestration"
+                EC2[<fa:fa-desktop> EC2 t2.micro] --> Airflow[<fa:fa-wind> Airflow in Docker]
+            end
+
+            subgraph "Data Lakehouse"
+                S3[<fa:fa-database> S3 Bucket]
+                Glue[<fa:fa-table> Glue Data Catalog]
+            end
+        end
+    end
+
+    %% Define Flows
+    User -- "Manages" --> Terraform
+    Terraform -- "Deploys" --> AWS_Cloud
+    Producer -- "Sends Events" --> MSK
+
+    subgraph "Streaming Pipeline"
+        direction LR
+        MSK -->|1. Reads Stream| EMR
+        EMR -->|2. Writes| S3
+        EMR -- "Updates" --> Glue
+    end
+
+    subgraph "Batch Pipeline"
+        direction LR
+        Airflow -- "1. Triggers Job" --> EMR
+        EMR -- "2. Reads Batch Files" --> S3
+        EMR -- "3. Appends Data" --> S3
+        EMR -- "Updates" --> Glue
+    end
+
+    style S3 fill:#5A30B5,stroke:#fff,stroke-width:2px,color:#fff
+    style Glue fill:#447A00,stroke:#fff,stroke-width:2px,color:#fff
+    style MSK fill:#D84B2A,stroke:#fff,stroke-width:2px,color:#fff
+    style EMR fill:#2573A8,stroke:#fff,stroke-width:2px,color:#fff
+    style EC2 fill:#EC912D,stroke:#fff,stroke-width:2px,color:#fff
+```
+
 ## Guiding Principles
 
 * **Infrastructure as Code First:** All AWS resources are provisioned and managed through Terraform. There is no manual setup required in the AWS Console.
