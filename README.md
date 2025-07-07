@@ -7,7 +7,7 @@ The entire platform is defined using Infrastructure as Code (IaC) with Terraform
 ## Architecture Diagram
 
 ```mermaid
-graph TD
+graph LR
     subgraph "Developer Environment"
         User("User")
         Terraform("Terraform")
@@ -15,42 +15,23 @@ graph TD
     end
 
     subgraph "AWS Cloud"
-        subgraph "VPC"
-            subgraph "Ingestion"
-                MSK("Amazon MSK Serverless")
-            end
-
-            subgraph "Processing"
-                EMR("Amazon EMR Serverless")
-            end
-
-            subgraph "Orchestration"
-                EC2("EC2 t2.micro") --> Airflow("Airflow in Docker")
-            end
-
-            subgraph "Data Lakehouse"
-                S3("S3 Bucket")
-                Glue("Glue Data Catalog")
-            end
+        subgraph "Orchestration"
+            EC2("EC2 t2.micro") --> Airflow("Airflow")
+        end
+        
+        subgraph "Pipeline"
+            MSK("Amazon MSK Serverless") --> EMR("Amazon EMR Serverless")
+            EMR --> S3("S3 Data Lake")
+            EMR --> Glue("Glue Data Catalog")
         end
     end
 
-    %% Define Top-Level Flows
+    %% Define Flows
     User -- "Manages" --> Terraform
-    Terraform -- "Deploys" --> VPC
-
-    %% Streaming Pipeline Flow
-    Producer -- "Sends Events" --> MSK
-    MSK -- "1. Reads Stream" --> EMR
-    EMR -- "2. Writes Stream Data" --> S3
-    EMR -- "3. Updates Stream Metadata" --> Glue
-
-    %% Batch Pipeline Flow
-    Airflow -- "1. Triggers Job" --> EMR
-    EMR -- "2. Reads Batch Files from" --> S3
-    EMR -- "3. Appends Batch Data to" --> S3
-    EMR -- "4. Updates Batch Metadata" --> Glue
-
+    Terraform -- "Deploys" --> AWS
+    
+    Producer -- "Streaming Ingestion" --> MSK
+    Airflow -- "Batch Orchestration" --> EMR
 
     %% Styling
     style S3 fill:#5A30B5,stroke:#fff,stroke-width:2px,color:#fff
