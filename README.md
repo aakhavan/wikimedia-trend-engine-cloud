@@ -9,57 +9,56 @@ The entire platform is defined using Infrastructure as Code (IaC) with Terraform
 ```mermaid
 graph TD
     subgraph "Developer Environment"
-        User[<fa:fa-user> Developer]
-        Terraform[<fa:fa-code> Terraform]
-        Producer[<fa:fa-python> producer.py]
+        User("User")
+        Terraform("Terraform")
+        Producer("producer.py")
     end
 
     subgraph "AWS Cloud"
         subgraph "VPC"
             subgraph "Ingestion"
-                MSK[<fa:fa-server> Amazon MSK Serverless]
+                MSK("Amazon MSK Serverless")
             end
 
             subgraph "Processing"
-                EMR[<fa:fa-cogs> Amazon EMR Serverless]
+                EMR("Amazon EMR Serverless")
             end
 
             subgraph "Orchestration"
-                EC2[<fa:fa-desktop> EC2 t2.micro] --> Airflow[<fa:fa-wind> Airflow in Docker]
+                EC2("EC2 t2.micro") --> Airflow("Airflow in Docker")
             end
 
             subgraph "Data Lakehouse"
-                S3[<fa:fa-database> S3 Bucket]
-                Glue[<fa:fa-table> Glue Data Catalog]
+                S3("S3 Bucket")
+                Glue("Glue Data Catalog")
             end
         end
     end
 
-    %% Define Flows
+    %% Define Top-Level Flows
     User -- "Manages" --> Terraform
-    Terraform -- "Deploys" --> AWS_Cloud
+    Terraform -- "Deploys" --> VPC
+
+    %% Streaming Pipeline Flow
     Producer -- "Sends Events" --> MSK
+    MSK -- "1. Reads Stream" --> EMR
+    EMR -- "2. Writes Stream Data" --> S3
+    EMR -- "3. Updates Stream Metadata" --> Glue
 
-    subgraph "Streaming Pipeline"
-        direction LR
-        MSK -->|1. Reads Stream| EMR
-        EMR -->|2. Writes| S3
-        EMR -- "Updates" --> Glue
-    end
+    %% Batch Pipeline Flow
+    Airflow -- "1. Triggers Job" --> EMR
+    EMR -- "2. Reads Batch Files from" --> S3
+    EMR -- "3. Appends Batch Data to" --> S3
+    EMR -- "4. Updates Batch Metadata" --> Glue
 
-    subgraph "Batch Pipeline"
-        direction LR
-        Airflow -- "1. Triggers Job" --> EMR
-        EMR -- "2. Reads Batch Files" --> S3
-        EMR -- "3. Appends Data" --> S3
-        EMR -- "Updates" --> Glue
-    end
 
+    %% Styling
     style S3 fill:#5A30B5,stroke:#fff,stroke-width:2px,color:#fff
     style Glue fill:#447A00,stroke:#fff,stroke-width:2px,color:#fff
     style MSK fill:#D84B2A,stroke:#fff,stroke-width:2px,color:#fff
     style EMR fill:#2573A8,stroke:#fff,stroke-width:2px,color:#fff
     style EC2 fill:#EC912D,stroke:#fff,stroke-width:2px,color:#fff
+
 ```
 
 ## Guiding Principles
