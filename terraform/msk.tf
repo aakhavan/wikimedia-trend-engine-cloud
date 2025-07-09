@@ -57,12 +57,14 @@ resource "aws_msk_cluster" "wikimedia_cluster" {
     revision = aws_msk_configuration.kafka_config.latest_revision
   }
 
-  # Enable SASL/SCRAM for secure authentication. This is a best practice.
   client_authentication {
     sasl {
-      scram = true
+      iam = true // Change this from 'scram = true' to 'iam = true'
     }
   }
+
+  tags = local.common_tags
+}
 
   tags = local.common_tags
 }
