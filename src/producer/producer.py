@@ -31,6 +31,23 @@ class WikimediaStreamProducer:
             raise
 
     def _get_msk_bootstrap_servers(self):
+        """
+        Gets the MSK bootstrap servers.
+
+        BEST PRACTICE: Prioritizes reading from the 'MSK_BOOTSTRAP_SERVERS'
+        environment variable for speed and decoupling. If not found, it falls
+        back to discovering them via the AWS API.
+        """
+        # 1. (Primary Method) Read from environment variable
+        bootstrap_servers = os.environ.get('MSK_BOOTSTRAP_SERVERS')
+        if bootstrap_servers:
+            logging.info("Found MSK bootstrap servers in environment variable.")
+            return bootstrap_servers
+
+        # 2. (Fallback Method) Discover via AWS API
+        logging.warning("MSK_BOOTSTRAP_SERVERS environment variable not set. Falling back to API discovery.")
+        logging.warning("For production, it is highly recommended to set this environment variable.")
+
         region = self.config['aws']['region']
         try:
             kafka_client = boto3.client('kafka', region_name=region)
@@ -41,10 +58,14 @@ class WikimediaStreamProducer:
 
             cluster_arn = clusters['ClusterInfoList'][0]['ClusterArn']
             response = kafka_client.get_bootstrap_brokers(ClusterArn=cluster_arn)
-            logging.info("Successfully retrieved MSK bootstrap brokers.")
+            logging.info("Successfully retrieved MSK bootstrap brokers via AWS API.")
+            # Note: Your producer is configured for IAM, so this is the correct string.
             return response['BootstrapBrokerStringSaslIam']
         except (NoCredentialsError, PartialCredentialsError):
-            logging.error("AWS credentials not found. Ensure the EC2 instance has the correct IAM role.")
+            logging.error("AWS credentials not found. Ensure your environment is configured correctly.")
+            raise
+        except Exception as e:
+            logging.error(f"An error occurred during MSK discovery: {e}")
             raise
 
     def _create_kafka_producer(self):

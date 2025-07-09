@@ -2,8 +2,6 @@
 resource "aws_iam_role" "spark_execution_role" {
   name = "${local.project_name}-spark-execution-role"
 
-  # This policy defines who can assume this role.
-  # Here, we allow services running on EC2 (like EMR or a self-managed Spark cluster) to assume it.
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
@@ -20,7 +18,7 @@ resource "aws_iam_role" "spark_execution_role" {
   tags = local.common_tags
 }
 
-# Policy granting access to the S3 Data Lake
+# Policy granting access to the S3 data lake bucket
 resource "aws_iam_policy" "s3_access_policy" {
   name        = "${local.project_name}-s3-access-policy"
   description = "Allows read/write access to the S3 data lake bucket"

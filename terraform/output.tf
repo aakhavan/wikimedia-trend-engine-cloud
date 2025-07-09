@@ -2,7 +2,7 @@
 output "msk_bootstrap_brokers_sasl_scram" {
   description = "The SASL/SCRAM connection string for the MSK cluster."
   value       = aws_msk_cluster.wikimedia_cluster.bootstrap_brokers_sasl_scram
-  sensitive   = true # Mark as sensitive to prevent it from being shown in logs
+  sensitive   = true
 }
 
 output "data_lake_s3_bucket_name" {

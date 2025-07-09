@@ -2,7 +2,7 @@
 variable "aws_region" {
   description = "The AWS region where resources will be created."
   type        = string
-  default     = "us-east-1"
+  default     = "eu-central-1"
 }
 
 variable "availability_zones_count" {

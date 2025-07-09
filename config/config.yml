@@ -3,19 +3,16 @@
 # =============================================================================
 
 wikimedia:
-  # The URL for the Server-Sent Events (SSE) stream of recent changes.
   stream_url: "https://stream.wikimedia.org/v2/stream/recentchange"
 
 kafka:
-  # The Kafka topic where events will be produced.
   topic_name: "wikimedia.recentchange"
 
   # Performance and durability settings for the Kafka producer.
   producer_config:
-    linger_ms: 5      # Wait 5ms to batch messages, improving throughput.
-    batch_size: 65536 # Batch messages up to 64KB.
-    acks: "all"       # Highest durability guarantee.
+    linger_ms: 5
+    batch_size: 65536
+    acks: "all"
 
 aws:
-  # The default AWS region to use for API calls (e.g., to find MSK).
   region: "eu-central-1"
