@@ -8,6 +8,7 @@ import sseclient
 import boto3
 from confluent_kafka import Producer
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError
+from aws_msk_iam_sasl_signer import MSKAuthTokenProvider
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -75,26 +76,25 @@ class WikimediaStreamProducer:
         bootstrap_servers = self._get_msk_bootstrap_servers()
         region = self.config['aws']['region']
 
-        # This is the required Python callback function for IAM authentication.
-        # It uses boto3 to generate a temporary token that the C library can use.
+        # This is the CORRECT and ROBUST way to handle IAM authentication.
+        # It uses the official AWS library to generate the token.
         def iam_oauth_cb(oauth_config):
             """The OAuth Bearer token refresh callback for IAM."""
             try:
-                client = boto3.client('kafka', region_name=region)
-                # This is the standard boto3 method to generate the token for this purpose.
-                token, _ = client._get_iam_token(bootstrap_servers)
-                # The token is returned with its expiry time (5 minutes from now).
-                return token, int(time.time() + 300)
+                # The generate_auth_token method returns the token and its expiry time in milliseconds.
+                token, expiry_ms = MSKAuthTokenProvider.generate_auth_token(region)
+                # The confluent-kafka-python library expects the expiry time in seconds.
+                return token, expiry_ms / 1000
             except Exception as e:
-                logging.error(f"Failed to generate IAM token: {e}")
+                logging.error(f"Failed to generate IAM token using MSKAuthTokenProvider: {e}")
                 raise
 
-        # This is the CORRECT configuration for the Python client to use IAM.
+        # The producer configuration remains the same, but the callback is now reliable.
         producer_config = {
             'bootstrap.servers': bootstrap_servers,
             'security.protocol': 'SASL_SSL',
-            'sasl.mechanisms': 'OAUTHBEARER', # Use OAUTHBEARER instead of AWS_MSK_IAM
-            'oauth_cb': iam_oauth_cb          # Provide the Python callback function
+            'sasl.mechanisms': 'OAUTHBEARER',
+            'oauth_cb': iam_oauth_cb
         }
 
         # Add performance settings from our config.yml
