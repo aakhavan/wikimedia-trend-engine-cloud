@@ -71,17 +71,31 @@ class WikimediaStreamProducer:
     def _create_kafka_producer(self):
         """Creates a Kafka producer using the Confluent-Kafka library."""
         bootstrap_servers = self._get_msk_bootstrap_servers()
+        region = self.config['aws']['region']
 
-        # Configuration for Confluent-Kafka client with IAM
+        # This is the required Python callback function for IAM authentication.
+        # It uses boto3 to generate a temporary token that the C library can use.
+        def iam_oauth_cb(oauth_config):
+            """The OAuth Bearer token refresh callback for IAM."""
+            try:
+                client = boto3.client('kafka', region_name=region)
+                # This is the standard boto3 method to generate the token for this purpose.
+                token, _ = client._get_iam_token(bootstrap_servers)
+                # The token is returned with its expiry time (5 minutes from now).
+                return token, int(time.time() + 300)
+            except Exception as e:
+                logging.error(f"Failed to generate IAM token: {e}")
+                raise
+
+        # This is the CORRECT configuration for the Python client to use IAM.
         producer_config = {
             'bootstrap.servers': bootstrap_servers,
             'security.protocol': 'SASL_SSL',
-            'sasl.mechanisms': 'OAUTHBEARER',
-            'sasl.login.callback.handler.class': 'software.amazon.msk.auth.iam.IAMOAuthBearerLoginCallbackHandler'
+            'sasl.mechanisms': 'OAUTHBEARER', # Use OAUTHBEARER instead of AWS_MSK_IAM
+            'oauth_cb': iam_oauth_cb          # Provide the Python callback function
         }
 
         # Add performance settings from our config.yml
-        # Note: confluent-kafka uses '.' instead of '_' for keys
         for key, value in self.config['kafka']['producer_config'].items():
             producer_config[key.replace('_', '.')] = value
 
