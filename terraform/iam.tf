@@ -84,3 +84,38 @@ resource "aws_iam_role_policy_attachment" "attach_glue_policy" {
   role       = aws_iam_role.spark_execution_role.name
   policy_arn = aws_iam_policy.glue_access_policy.arn
 }
+
+# Policy granting access to the MSK cluster for connecting and describing
+resource "aws_iam_policy" "msk_access_policy" {
+  name        = "${local.project_name}-msk-access-policy"
+  description = "Allows connecting to the MSK cluster and describing its topics"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Action = [
+          "kafka-cluster:Connect",
+          "kafka-cluster:DescribeCluster",
+          "kafka-cluster:DescribeTopic",
+          "kafka-cluster:ReadData",
+          "kafka-cluster:WriteData"
+        ],
+        Effect   = "Allow",
+        Resource = aws_msk_cluster.wikimedia_cluster.arn
+      },
+      {
+        # This is required for the producer's API-based broker discovery fallback
+        Action   = "kafka:GetBootstrapBrokers",
+        Effect   = "Allow",
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+# Attach the MSK policy to the Spark role
+resource "aws_iam_role_policy_attachment" "attach_msk_policy" {
+  role       = aws_iam_role.spark_execution_role.name
+  policy_arn = aws_iam_policy.msk_access_policy.arn
+}

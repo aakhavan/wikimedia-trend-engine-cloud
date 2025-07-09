@@ -66,5 +66,3 @@ resource "aws_msk_cluster" "wikimedia_cluster" {
   tags = local.common_tags
 }
 
-  tags = local.common_tags
-}
